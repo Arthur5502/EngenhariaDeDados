@@ -1,31 +1,13 @@
 import os
-
 from dotenv import load_dotenv
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
 load_dotenv()
 
-
 class MongoDBLoader:
-    """Responsável pelo carregamento dos dados transformados no MongoDB Atlas.
-
-    Gerencia a conexão com o cluster remoto utilizando credenciais carregadas
-    via variáveis de ambiente e expõe métodos para inserção em coleções.
-
-    Attributes:
-        client (MongoClient): Cliente ativo de conexão com o MongoDB Atlas.
-    """
-
+    
     def __init__(self):
-        """Inicializa a conexão com o MongoDB Atlas.
-
-        Lê as variáveis de ambiente DB_USER e DB_PASSWORD (definidas no arquivo .env)
-        para construir a URI de conexão com o cluster.
-
-        Raises:
-            pymongo.errors.ConnectionFailure: Se não for possível conectar ao cluster.
-        """
         db_user = os.getenv("DB_USER")
         db_password = os.getenv("DB_PASSWORD")
         uri = (
@@ -35,16 +17,6 @@ class MongoDBLoader:
         self.client = MongoClient(uri, server_api=ServerApi("1"))
 
     def load(self, data: list[dict], db_name: str, collection_name: str) -> int:
-        """Insere uma lista de documentos em uma coleção do MongoDB Atlas.
-
-        Args:
-            data: Lista de dicionários a serem inseridos como documentos.
-            db_name: Nome do banco de dados de destino.
-            collection_name: Nome da coleção de destino.
-
-        Returns:
-            Quantidade de documentos inseridos com sucesso.
-        """
         if not data:
             print("Nenhum dado para inserir.")
             return 0
@@ -56,5 +28,4 @@ class MongoDBLoader:
         return inserted
 
     def close(self):
-        """Encerra a conexão com o MongoDB Atlas."""
         self.client.close()
