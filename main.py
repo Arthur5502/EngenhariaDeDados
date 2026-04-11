@@ -1,40 +1,35 @@
+import logging
 from src.extract import PNCPExtractor
 from src.transform import PNCPTransformer
 from src.load import MongoDBLoader
+from config import settings
 
-UF = "pe"
-CODIGO_MUNICIPIO_IBGE = "2611606" #Código de recife
-CODIGO_MODALIDADE = "8" #Código de dispensa eletrônica
-DATA_FINAL = "20260331"
+logging.basicConfig(
+    level=settings.LOG_LEVEL,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger(__name__)
 
-DB_NAME = "pncp"
-COLLECTION_NAME = "contratacoes"
+settings.validate()
 
 def run_etl() -> None:
-    print("=" * 50)
-    print("Iniciando ETL — PNCP")
-    print("=" * 50)
+    logger.info("Iniciando Pipeline ETL — PNCP")
+    extractor = PNCPExtractor(settings.UF, settings.CODIGO_MUNICIPIO_IBGE, settings.CODIGO_MODALIDADE)
+    raw_data = extractor.extract_all(settings.DATA_FINAL)
+    logger.info(f"Total extraído: {len(raw_data)} registros")
 
-    print("\n[1/3] EXTRACT")
-    extractor = PNCPExtractor(UF, CODIGO_MUNICIPIO_IBGE, CODIGO_MODALIDADE)
-    raw_data = extractor.extract_all(DATA_FINAL)
-    print(f"Total extraído: {len(raw_data)} registros\n")
-
-    print("[2/3] TRANSFORM")
     transformer = PNCPTransformer()
     transformed_data = transformer.transform(raw_data)
-    print(f"Total transformado: {len(transformed_data)} registros\n")
+    logger.info(f"Total transformado: {len(transformed_data)} registros")
 
-    print("[3/3] LOAD")
     loader = MongoDBLoader()
     try:
-        loader.load(transformed_data, DB_NAME, COLLECTION_NAME)
+        loader.load(transformed_data, settings.DB_NAME, settings.COLLECTION_NAME)
     finally:
         loader.close()
 
-    print("\n" + "=" * 50)
-    print("ETL concluído com sucesso!")
-    print("=" * 50)
+    logger.info("ETL concluído com sucesso!")
 
 if __name__ == "__main__":
     run_etl()

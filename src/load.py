@@ -1,30 +1,29 @@
 import os
-from dotenv import load_dotenv
+import logging
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+from config import settings
 
-load_dotenv()
+logger = logging.getLogger(__name__)
 
 class MongoDBLoader:
     
     def __init__(self):
-        db_user = os.getenv("DB_USER")
-        db_password = os.getenv("DB_PASSWORD")
-        uri = (
-            f"mongodb+srv://{db_user}:{db_password}"
-            "@cluster0.cpevj4j.mongodb.net/?appName=Cluster0"
-        )
+        uri = settings.MONGO_URI
+        if not uri:
+            logger.error("MONGO_URI não encontrada nas configurações!")
+            raise ValueError("MONGO_URI não foi encontrada no arquivo .env!")
         self.client = MongoClient(uri, server_api=ServerApi("1"))
 
     def load(self, data: list[dict], db_name: str, collection_name: str) -> int:
         if not data:
-            print("Nenhum dado para inserir.")
+            logger.warning("Nenhum dado para inserir.")
             return 0
 
         collection = self.client[db_name][collection_name]
         result = collection.insert_many(data)
         inserted = len(result.inserted_ids)
-        print(f"{inserted} documento(s) inserido(s) em '{db_name}.{collection_name}'")
+        logger.info(f"{inserted} documento(s) inserido(s) em '{db_name}.{collection_name}'")
         return inserted
 
     def close(self):
