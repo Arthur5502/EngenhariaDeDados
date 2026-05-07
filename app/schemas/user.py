@@ -23,6 +23,9 @@ def _cnpj_valido(cnpj: str) -> bool:
             return False
     return True
 
+def mascarar_cpf(cpf: str) -> str:
+    return f"***.***.{cpf[6:9]}-**"
+
 class UserCreate(BaseModel):
     nome: str
     cpf: str
@@ -57,6 +60,18 @@ class UserCreate(BaseModel):
     def validar_uf(cls, v: str) -> str:
         return v.upper()
 
+class LoginBody(BaseModel):
+    cnpj: str
+    password: str
+
+    @field_validator("cnpj")
+    @classmethod
+    def validar_cnpj(cls, v: str) -> str:
+        digits = re.sub(r"\D", "", v)
+        if not _cnpj_valido(digits):
+            raise ValueError("CNPJ inválido")
+        return digits
+
 class UserOut(BaseModel):
     id: str
     nome: str
@@ -73,4 +88,5 @@ class UserOut(BaseModel):
 
 class TokenOut(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"

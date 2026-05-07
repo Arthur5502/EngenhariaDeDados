@@ -5,6 +5,7 @@ class Settings(BaseSettings):
 
     DB_USER: str
     DB_PASSWORD: str
+    SECRET_KEY: str
 
     MONGO_DB: str = "pncp"
     MONGO_COLLECTION: str = "contratacoes"
@@ -14,9 +15,9 @@ class Settings(BaseSettings):
     PNCP_MUNICIPIO_IBGE: str = "2611606"
     PNCP_MODALIDADE: str = "8"
 
-    SECRET_KEY: str
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    SUPABASE_URL: str
+    SUPABASE_SERVICE_KEY: str
+    SUPABASE_JWT_SECRET: str
 
     @property
     def mongo_uri(self) -> str:

@@ -1,9 +1,7 @@
+import asyncio
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError
-from app.database import get_db
-from app.services.auth import decode_token
-from app.services.user import UserService
+from app.services.supabase import _get_client
 
 _bearer = HTTPBearer()
 
@@ -14,14 +12,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(_
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = decode_token(credentials.credentials)
-        cnpj: str | None = payload.get("sub")
-        if not cnpj:
+        response = await asyncio.to_thread(
+            _get_client().auth.get_user,
+            credentials.credentials,
+        )
+        user = response.user
+        if not user:
             raise unauthorized
-    except JWTError:
+        return {"user_id": str(user.id), "email": user.email}
+    except Exception:
         raise unauthorized
-
-    user = await UserService(get_db()).get_by_cnpj(cnpj)
-    if not user or not user.get("ativo"):
-        raise unauthorized
-    return user
