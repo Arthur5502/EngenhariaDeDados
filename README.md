@@ -4,6 +4,18 @@ Pipeline de Engenharia de Dados para coleta, tratamento e persistência de dados
 
 ---
 
+## Integrantes
+
+- Arthur Felipe Campos Pina
+- Jácio Alves Neto Filho
+- Vinicius Silva Queiroz
+- Guilherme Wolf Nogueira
+- Mateus Felipe Cavalcanti e Silva
+- Gabriel Victor de Melo Reis
+- Lucas Almeida de Carvalho
+
+---
+
 ## Proposta
 
 O objetivo é construir um pipeline ETL (Extract, Transform, Load) que consuma a API pública do [PNCP](https://pncp.gov.br) para coletar dados de contratações por dispensa eletrônica no município de Recife/PE, normalizar as informações e armazená-las no MongoDB Atlas para análises futuras.
