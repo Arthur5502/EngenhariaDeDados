@@ -12,7 +12,7 @@ Pipeline de Engenharia de Dados para coleta, tratamento e persistência de dados
 - Guilherme Wolf Nogueira
 - Mateus Felipe Cavalcanti e Silva
 - Gabriel Victor de Melo Reis
-- Lucas Carvalho
+- Lucas Almeida de Carvalho
 
 ---
 
