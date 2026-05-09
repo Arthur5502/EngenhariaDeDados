@@ -1,7 +1,9 @@
 .env
-venv
+.venv
 primeira-parte-da-aula
 .claude
 teste_mongo.py
 testep_ncp.py
 DIARIO_TECNICO.md
+__pycache__
+*.pyc

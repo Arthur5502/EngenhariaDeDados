@@ -16,7 +16,7 @@ settings.validate()
 def run_etl() -> None:
     logger.info("Iniciando Pipeline ETL — PNCP")
     extractor = PNCPExtractor(settings.UF, settings.CODIGO_MUNICIPIO_IBGE, settings.CODIGO_MODALIDADE)
-    raw_data = extractor.extract_all(settings.DATA_FINAL)
+    raw_data = extractor.extract_all(settings.DATA_INICIAL, settings.DATA_FINAL)
     logger.info(f"Total extraído: {len(raw_data)} registros")
 
     transformer = PNCPTransformer()
