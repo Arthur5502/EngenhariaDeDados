@@ -11,8 +11,9 @@ class PNCPExtractor:
         self.codigo_municipio_ibge = codigo_municipio_ibge
         self.codigo_modalidade_contratacao = codigo_modalidade_contratacao
 
-    def extract_page(self, data_final: str, pagina: int = 1, tamanho_pagina: int = 50) -> dict:
+    def extract_page(self, data_inicial: str, data_final: str, pagina: int = 1, tamanho_pagina: int = 50) -> dict:
         params = {
+            "dataInicial": data_inicial,
             "dataFinal": data_final,
             "codigoModalidadeContratacao": self.codigo_modalidade_contratacao,
             "uf": self.uf,
@@ -26,12 +27,12 @@ class PNCPExtractor:
             return {}
         return response.json()
 
-    def extract_all(self, data_final: str, tamanho_pagina: int = 50) -> list[dict]:
+    def extract_all(self, data_inicial: str, data_final: str, tamanho_pagina: int = 50) -> list[dict]:
         all_data = []
         pagina = 1
 
         while True:
-            response = self.extract_page(data_final, pagina, tamanho_pagina)
+            response = self.extract_page(data_inicial, data_final, pagina, tamanho_pagina)
 
             if not response:
                 print("  Nenhum dado encontrado para o período consultado.")

@@ -8,11 +8,11 @@ from src.load import MongoDBLoader
 load_dotenv()
 
 @task(retries=3, retry_delay_seconds=15, name="Extração PNCP")
-def extract(uf: str, codigo_municipio_ibge: str, data_final: str) -> list[dict]:
+def extract(uf: str, codigo_municipio_ibge: str, data_inicial: str, data_final: str) -> list[dict]:
     logger = get_run_logger()
-    logger.info(f"Iniciando extração — UF: {uf} | Município IBGE: {codigo_municipio_ibge} | Data: {data_final}")
+    logger.info(f"Iniciando extração — UF: {uf} | Município IBGE: {codigo_municipio_ibge} | Período: {data_inicial} → {data_final}")
     extractor = PNCPExtractor(uf, codigo_municipio_ibge, settings.CODIGO_MODALIDADE)
-    raw_data = extractor.extract_all(data_final, settings.TAMANHO_PAGINA)
+    raw_data = extractor.extract_all(data_inicial, data_final, settings.TAMANHO_PAGINA)
     logger.info(f"{len(raw_data)} registros brutos extraídos da API PNCP")
     return raw_data
 
@@ -44,13 +44,14 @@ def load(data: list[dict], db_name: str, collection_name: str) -> int:
 def etl_pncp_flow(
     uf: str = settings.UF,
     codigo_municipio_ibge: str = settings.CODIGO_MUNICIPIO_IBGE,
+    data_inicial: str = settings.DATA_INICIAL,
     data_final: str = settings.DATA_FINAL,
     db_name: str = settings.DB_NAME,
     collection_name: str = settings.COLLECTION_NAME,
 ):
     settings.validate()
 
-    raw_data = extract(uf, codigo_municipio_ibge, data_final)
+    raw_data = extract(uf, codigo_municipio_ibge, data_inicial, data_final)
     transformed_data = transform(raw_data)
     total_inserido = load(transformed_data, db_name, collection_name)
 

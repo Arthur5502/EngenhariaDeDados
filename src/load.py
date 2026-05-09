@@ -21,9 +21,16 @@ class MongoDBLoader:
             return 0
 
         collection = self.client[db_name][collection_name]
-        result = collection.insert_many(data)
-        inserted = len(result.inserted_ids)
-        logger.info(f"{inserted} documento(s) inserido(s) em '{db_name}.{collection_name}'")
+        inserted = 0
+        for doc in data:
+            result = collection.update_one(
+                {"_id": doc["_id"]},
+                {"$set": doc},
+                upsert=True,
+            )
+            if result.upserted_id is not None:
+                inserted += 1
+        logger.info(f"{inserted} novo(s) documento(s) inserido(s) em '{db_name}.{collection_name}'")
         return inserted
 
     def close(self):
