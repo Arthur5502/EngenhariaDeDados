@@ -26,6 +26,14 @@ def _cnpj_valido(cnpj: str) -> bool:
 def mascarar_cpf(cpf: str) -> str:
     return f"***.***.{cpf[6:9]}-**"
 
+def mascarar_email(email: str) -> str:
+    local, domain = email.split("@", 1)
+    return f"{local[:2]}***@{domain}"
+
+def mascarar_telefone(telefone: str) -> str:
+    digits = re.sub(r"\D", "", telefone)
+    return f"({'*' * (len(digits) - 4)}{digits[-4:]})"
+
 class UserCreate(BaseModel):
     nome: str
     cpf: str
@@ -76,8 +84,8 @@ class UserOut(BaseModel):
     id: str
     nome: str
     cpf_mascarado: str
-    email: str
-    telefone: str
+    email_mascarado: str
+    telefone_mascarado: str
     cnpj_mei: str
     razao_social: str
     cnae_principal: str

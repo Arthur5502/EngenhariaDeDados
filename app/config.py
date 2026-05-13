@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_KEY: str
     SUPABASE_JWT_SECRET: str
 
+    DATA_ENCRYPTION_KEY: str
+
     @property
     def mongo_uri(self) -> str:
         return (
