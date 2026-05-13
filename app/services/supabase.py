@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import httpx
 from supabase import create_client, Client
 from app.config import settings
+from app.utils.crypto import encrypt_field, decrypt_field, hash_field
 
 _client: Client | None = None
 
@@ -42,16 +43,34 @@ async def sign_in(email: str, password: str):
     )
 
 async def create_profile(user_id: str, data: dict) -> dict:
+    encrypted = {**data}
+    if "cpf" in encrypted:
+        cpf_plain = encrypted["cpf"]
+        encrypted["cpf"] = encrypt_field(cpf_plain)
+        encrypted["cpf_hash"] = hash_field(cpf_plain)
+    if "telefone" in encrypted:
+        encrypted["telefone"] = encrypt_field(encrypted["telefone"])
+
     def _insert():
-        return _get_client().table("users").insert({"id": user_id, **data}).execute()
+        return _get_client().table("users").insert({"id": user_id, **encrypted}).execute()
     response = await asyncio.to_thread(_insert)
-    return response.data[0]
+    return _decrypt_profile(response.data[0])
 
 async def get_profile(user_id: str) -> dict | None:
     def _select():
         return _get_client().table("users").select("*").eq("id", user_id).execute()
     response = await asyncio.to_thread(_select)
-    return response.data[0] if response.data else None
+    if not response.data:
+        return None
+    return _decrypt_profile(response.data[0])
+
+def _decrypt_profile(row: dict) -> dict:
+    result = {**row}
+    if result.get("cpf"):
+        result["cpf"] = decrypt_field(result["cpf"])
+    if result.get("telefone"):
+        result["telefone"] = decrypt_field(result["telefone"])
+    return result
 
 async def get_email_by_cnpj(cnpj: str) -> str | None:
     def _select():

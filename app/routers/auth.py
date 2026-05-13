@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.services.supabase import sign_up, sign_in, create_profile, get_profile, get_email_by_cnpj
-from app.schemas.user import UserCreate, UserOut, TokenOut, LoginBody, mascarar_cpf
+from app.schemas.user import UserCreate, UserOut, TokenOut, LoginBody, mascarar_cpf, mascarar_email, mascarar_telefone
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
@@ -35,8 +35,8 @@ async def register(body: UserCreate):
         id=str(user.id),
         nome=profile["nome"],
         cpf_mascarado=mascarar_cpf(profile["cpf"]),
-        email=str(user.email),
-        telefone=profile.get("telefone", ""),
+        email_mascarado=mascarar_email(str(user.email)),
+        telefone_mascarado=mascarar_telefone(profile.get("telefone", "")),
         cnpj_mei=profile["cnpj"],
         razao_social=profile.get("razao_social", ""),
         cnae_principal=profile.get("cnae_principal", ""),
@@ -84,8 +84,8 @@ async def me(current_user: dict = Depends(get_current_user)):
         id=current_user["user_id"],
         nome=profile["nome"],
         cpf_mascarado=mascarar_cpf(profile["cpf"]),
-        email=current_user["email"],
-        telefone=profile.get("telefone", ""),
+        email_mascarado=mascarar_email(current_user["email"]),
+        telefone_mascarado=mascarar_telefone(profile.get("telefone", "")),
         cnpj_mei=profile["cnpj"],
         razao_social=profile.get("razao_social", ""),
         cnae_principal=profile.get("cnae_principal", ""),
