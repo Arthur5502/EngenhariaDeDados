@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from app.services.supabase import sign_up, sign_in, create_profile, get_profile, get_email_by_cnpj
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from app.services.supabase import (
+    sign_up, sign_in, create_profile, get_profile, get_email_by_cnpj,
+    register_consent, log_audit,
+)
 from app.schemas.user import UserCreate, UserOut, TokenOut, LoginBody, mascarar_cpf, mascarar_email, mascarar_telefone
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-async def register(body: UserCreate):
+async def register(body: UserCreate, request: Request):
     try:
         response = await sign_up(body.email, body.password)
     except Exception as e:
@@ -31,6 +34,15 @@ async def register(body: UserCreate):
         "municipio": body.municipio,
     })
 
+    ip = request.client.host if request.client else None
+    await register_consent(
+        str(user.id),
+        "Tratamento de dados pessoais para cadastro e uso da plataforma PNCP Integrador.",
+        body.aceite_termos,
+        ip,
+    )
+    await log_audit(str(user.id), "cadastro", {"cnpj": body.cnpj_mei}, ip)
+
     return UserOut(
         id=str(user.id),
         nome=profile["nome"],
@@ -47,7 +59,7 @@ async def register(body: UserCreate):
     )
 
 @router.post("/login", response_model=TokenOut)
-async def login(body: LoginBody):
+async def login(body: LoginBody, request: Request):
     email = await get_email_by_cnpj(body.cnpj)
     if not email:
         raise HTTPException(
@@ -69,16 +81,22 @@ async def login(body: LoginBody):
     if not session:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão não iniciada")
 
+    ip = request.client.host if request.client else None
+    await log_audit(str(session.user.id), "login", None, ip)
+
     return TokenOut(
         access_token=session.access_token,
         refresh_token=session.refresh_token,
     )
 
 @router.get("/me", response_model=UserOut)
-async def me(current_user: dict = Depends(get_current_user)):
+async def me(request: Request, current_user: dict = Depends(get_current_user)):
     profile = await get_profile(current_user["user_id"])
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Perfil não encontrado")
+
+    ip = request.client.host if request.client else None
+    await log_audit(current_user["user_id"], "acesso_perfil", None, ip)
 
     return UserOut(
         id=current_user["user_id"],
