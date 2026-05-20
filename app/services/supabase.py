@@ -67,9 +67,15 @@ async def get_profile(user_id: str) -> dict | None:
 def _decrypt_profile(row: dict) -> dict:
     result = {**row}
     if result.get("cpf"):
-        result["cpf"] = decrypt_field(result["cpf"])
+        try:
+            result["cpf"] = decrypt_field(result["cpf"])
+        except Exception:
+            pass  # registro legado com valor em texto plano
     if result.get("telefone"):
-        result["telefone"] = decrypt_field(result["telefone"])
+        try:
+            result["telefone"] = decrypt_field(result["telefone"])
+        except Exception:
+            pass
     return result
 
 async def get_email_by_cnpj(cnpj: str) -> str | None:
@@ -77,3 +83,100 @@ async def get_email_by_cnpj(cnpj: str) -> str | None:
         return _get_client().table("users").select("email").eq("cnpj", cnpj).execute()
     response = await asyncio.to_thread(_select)
     return response.data[0]["email"] if response.data else None
+
+async def register_consent(
+    user_id: str,
+    finalidade: str,
+    aceito: bool,
+    ip: str | None = None,
+) -> dict:
+    """Registra consentimento do titular — LGPD Art. 7."""
+    def _insert():
+        return (
+            _get_client()
+            .table("user_consents")
+            .insert({"user_id": user_id, "finalidade": finalidade, "aceito": aceito, "ip_origem": ip})
+            .execute()
+        )
+    response = await asyncio.to_thread(_insert)
+    return response.data[0]
+
+async def get_user_consents(user_id: str) -> list[dict]:
+    def _select():
+        return (
+            _get_client()
+            .table("user_consents")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("concedido_em", desc=True)
+            .execute()
+        )
+    response = await asyncio.to_thread(_select)
+    return response.data
+
+async def revoke_consent(user_id: str, consent_id: str) -> dict | None:
+    """Revoga um consentimento específico — LGPD Art. 8, §5°."""
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+
+    def _update():
+        return (
+            _get_client()
+            .table("user_consents")
+            .update({"revogado_em": now})
+            .eq("id", consent_id)
+            .eq("user_id", user_id)
+            .is_("revogado_em", "null")
+            .execute()
+        )
+    response = await asyncio.to_thread(_update)
+    return response.data[0] if response.data else None
+
+async def log_audit(
+    user_id: str,
+    acao: str,
+    detalhes: dict | None = None,
+    ip: str | None = None,
+) -> None:
+    """Registra operação sobre dados pessoais — LGPD Art. 37."""
+    def _insert():
+        return (
+            _get_client()
+            .table("audit_log")
+            .insert({"user_id": user_id, "acao": acao, "detalhes": detalhes, "ip_origem": ip})
+            .execute()
+        )
+    try:
+        await asyncio.to_thread(_insert)
+    except Exception:
+        pass  # falhas de auditoria não devem interromper o fluxo principal
+
+async def get_audit_log(user_id: str) -> list[dict]:
+    def _select():
+        return (
+            _get_client()
+            .table("audit_log")
+            .select("*")
+            .eq("user_id", user_id)
+            .order("realizado_em", desc=True)
+            .execute()
+        )
+    response = await asyncio.to_thread(_select)
+    return response.data
+
+async def delete_user_account(user_id: str) -> None:
+    """Remove a conta do titular — LGPD Art. 18, VI (direito ao esquecimento).
+
+    A exclusão em auth.users propaga em cascata para public.users e user_consents.
+    Entradas em audit_log têm user_id definido como NULL (anonimização).
+    """
+    async with httpx.AsyncClient() as http:
+        r = await http.delete(
+            f"{settings.SUPABASE_URL}/auth/v1/admin/users/{user_id}",
+            headers={
+                "apikey": settings.SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}",
+            },
+        )
+        if not r.is_success:
+            raise Exception(r.json().get("msg", r.text))

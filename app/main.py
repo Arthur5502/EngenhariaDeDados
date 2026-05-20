@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from app.database import close_db
-from app.routers import contratacoes, etl, auth
+from app.routers import contratacoes, etl, auth, lgpd
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,8 +25,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     ]
     return JSONResponse(status_code=400, content={"detail": errors})
 
-
 app.include_router(auth.router)
+app.include_router(lgpd.router)
 app.include_router(contratacoes.router)
 app.include_router(etl.router)
 
