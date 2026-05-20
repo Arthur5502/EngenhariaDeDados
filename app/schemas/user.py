@@ -40,12 +40,19 @@ class UserCreate(BaseModel):
     email: EmailStr
     telefone: str
     password: str
-
+    aceite_termos: bool  # LGPD Art. 7 — consentimento explícito obrigatório
     cnpj_mei: str
     razao_social: str
     cnae_principal: str
     uf: str
     municipio: str
+
+    @field_validator("aceite_termos")
+    @classmethod
+    def validar_aceite(cls, v: bool) -> bool:
+        if not v:
+            raise ValueError("É necessário aceitar os termos de uso e política de privacidade para criar uma conta")
+        return v
 
     @field_validator("cpf")
     @classmethod
