@@ -41,6 +41,9 @@ def _write(df: DataFrame, name: str, db):
 def build_gold_layers(spark: SparkSession, db):
     silver = spark.read.parquet(SILVER_PATH)
 
+    # --- todos os dados (sem filtro) ---
+    _write(silver, "todos_contratos", db)
+
     # --- por UF ---
     _write(
         silver.groupBy("uf_sigla", "uf_nome")
