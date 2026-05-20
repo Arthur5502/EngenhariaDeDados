@@ -2,7 +2,7 @@ import os
 os.environ["_JAVA_OPTIONS"] = "-Djava.security.manager=allow"
 
 from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, count, sum as spark_sum, round as spark_round
+from pyspark.sql.functions import col, count, sum as spark_sum, round as spark_round, max as spark_max
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
@@ -88,6 +88,20 @@ def build_gold_layers(spark: SparkSession, db):
               )
               .orderBy("ano_compra"),
         "resumo_por_ano", db,
+    )
+
+    # --- prazo final mais longo ---
+    _write(
+        silver.orderBy(col("data_encerramento_proposta").desc())
+              .limit(1)
+              .select(
+                  "numero_controle_pncp",
+                  "objeto_compra",
+                  "orgao_razao_social",
+                  "data_encerramento_proposta",
+                  "valor_total_estimado",
+              ),
+        "prazo_mais_longo", db,
     )
 
     # --- por situação de compra ---
