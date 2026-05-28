@@ -23,6 +23,8 @@ MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = os.getenv("MONGO_DB_NAME", "pncp")
 COLLECTION_NAME = os.getenv("MONGO_COLLECTION_NAME", "bronze_pncp")
 
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
 def validate():
     obrigatorias = {
         "MONGO_URI": MONGO_URI,
