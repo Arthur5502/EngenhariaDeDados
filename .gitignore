@@ -7,3 +7,5 @@ testep_ncp.py
 DIARIO_TECNICO.md
 __pycache__
 *.pyc
+data.json
+.notebook/
