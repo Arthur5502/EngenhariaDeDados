@@ -8,3 +8,5 @@ __pycache__/
 .agents
 skills-lock.json
 .mcp.json
+CLAUDE.md
+output_data/
