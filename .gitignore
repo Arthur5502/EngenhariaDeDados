@@ -9,3 +9,4 @@ __pycache__/
 skills-lock.json
 .mcp.json
 CLAUDE.md
+output_data/
