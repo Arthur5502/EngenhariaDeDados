@@ -5,7 +5,14 @@ primeira-parte-da-aula
 teste_mongo.py
 testep_ncp.py
 DIARIO_TECNICO.md
-__pycache__
+__pycache__/
 *.pyc
+*.pyo
 data.json
 .notebook/
+.DS_Store
+.agents
+skills-lock.json
+.mcp.json
+CLAUDE.md
+output_data/
